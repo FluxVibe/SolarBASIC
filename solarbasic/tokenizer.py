@@ -55,6 +55,8 @@ class Tokenizer:
         "FUNC",
         "ENDFUNC",
         "RETURN",
+        "GOSUB",
+        "LET",
     }
 
     TWO_CHAR_OPERATORS = {"<=", ">=", "<>"}

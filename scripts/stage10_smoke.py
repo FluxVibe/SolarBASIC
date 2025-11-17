@@ -1,4 +1,4 @@
-"""Quick smoke test for the SolarBASIC Stage 10 feature set."""
+"""Quick smoke test for the SolarBASIC v1.0.0 feature set."""
 from pathlib import Path
 import sys
 
@@ -29,6 +29,8 @@ def main() -> None:
     storage.set_line(70, "RETURN A+B")
     storage.set_line(80, "ENDFUNC")
     storage.set_line(90, "PRINT ADD(3,4)")
+    storage.set_line(100, "PRINT ABS(-9)")
+    storage.set_line(110, "PRINT SGN(-2)")
 
     runner = ProgramRunner(parser, executor)
     runner.run(storage.snapshot())

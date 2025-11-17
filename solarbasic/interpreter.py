@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
+import random
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 from .tokenizer import Token, TokenType, Tokenizer, TokenizerError
+from .version import AUTHOR as SOLARBASIC_AUTHOR, TAGLINE, VERSION_LABEL as SOLARBASIC_VERSION
 
 
-SOLARBASIC_VERSION = "v0.1"
-SOLARBASIC_AUTHOR = "FluxVibe"
 DEFAULT_STEP_LIMIT = 10_000
 
 
@@ -94,6 +94,8 @@ class ExecutionResult:
 
     signal: ExecutionSignal = ExecutionSignal.CONTINUE
     goto_target: Optional[int] = None
+    gosub_target: Optional[int] = None
+    gosub_return: bool = False
     return_value: Optional[int] = None
 
 
@@ -115,6 +117,13 @@ class NumberLiteral(Expression):
 @dataclass
 class IdentifierExpression(Expression):
     name: str
+
+
+@dataclass
+class AssignmentStatement(Statement):
+    name: str
+    expression: Expression
+    force_global: bool = False
 
 
 @dataclass
@@ -181,6 +190,11 @@ class IfStatement(Statement):
 
 @dataclass
 class GotoStatement(Statement):
+    target_line: int
+
+
+@dataclass
+class GosubStatement(Statement):
     target_line: int
 
 
@@ -408,8 +422,12 @@ class CommandParser:
             raise ParseError("No input to parse.")
 
         head = tokens[0]
+
+        if self._looks_like_assignment(tokens):
+            return self._parse_assignment(tokens)
+
         if head.type is not TokenType.KEYWORD:
-            raise ParseError("Expected a keyword at the start of the command.")
+            raise ParseError("Expected a keyword or assignment at the start of the command.")
 
         keyword = head.lexeme
         body = tokens[1:]
@@ -422,6 +440,8 @@ class CommandParser:
             return self._parse_if(body)
         if keyword == "GOTO":
             return self._parse_goto(body)
+        if keyword == "GOSUB":
+            return self._parse_gosub(body)
         if keyword == "WHILE":
             return self._parse_while(body)
         if keyword == "WEND":
@@ -456,6 +476,44 @@ class CommandParser:
             return ExitStatement(keyword=keyword)
 
         raise ParseError(f"Unknown command '{keyword}'.")
+
+    def _looks_like_assignment(self, tokens: Sequence[Token]) -> bool:
+        if not tokens:
+            return False
+        head = tokens[0]
+        if head.type is TokenType.KEYWORD and head.lexeme == "LET":
+            return True
+        if (
+            head.type is TokenType.IDENTIFIER
+            and len(tokens) >= 2
+            and tokens[1].type is TokenType.OPERATOR
+            and tokens[1].lexeme == "="
+        ):
+            return True
+        return False
+
+    def _parse_assignment(self, tokens: Sequence[Token]) -> AssignmentStatement:
+        force_global = tokens[0].type is TokenType.KEYWORD and tokens[0].lexeme == "LET"
+        start = 1 if force_global else 0
+
+        if start >= len(tokens) or tokens[start].type is not TokenType.IDENTIFIER:
+            raise ParseError("Assignment must specify a target identifier.")
+
+        if start + 1 >= len(tokens):
+            raise ParseError("Assignment requires '=' followed by an expression.")
+
+        equals_token = tokens[start + 1]
+        if equals_token.type is not TokenType.OPERATOR or equals_token.lexeme != "=":
+            raise ParseError("Assignment requires '=' after the target name.")
+
+        expression_tokens = tokens[start + 2 :]
+        if not expression_tokens:
+            raise ParseError("Assignment requires an expression after '='.")
+
+        expression = self._expression_parser.parse(expression_tokens)
+        return AssignmentStatement(
+            name=tokens[start].lexeme.upper(), expression=expression, force_global=force_global
+        )
 
     def _parse_print(self, tokens: Sequence[Token]) -> PrintStatement:
         if not tokens:
@@ -519,6 +577,11 @@ class CommandParser:
             raise ParseError("GOTO requires exactly one line-number argument.")
         return GotoStatement(target_line=int(tokens[0].lexeme))
 
+    def _parse_gosub(self, tokens: Sequence[Token]) -> GosubStatement:
+        if len(tokens) != 1 or tokens[0].type is not TokenType.NUMBER:
+            raise ParseError("GOSUB requires exactly one line-number argument.")
+        return GosubStatement(target_line=int(tokens[0].lexeme))
+
     def _parse_while(self, tokens: Sequence[Token]) -> WhileStatement:
         if not tokens:
             raise ParseError("WHILE requires a condition expression.")
@@ -579,7 +642,7 @@ class CommandParser:
 
 
 class CommandExecutor:
-    """Execute SolarBASIC statements through the Stage 10 feature set."""
+    """Execute SolarBASIC statements through the v1.0.0 feature set."""
 
     def __init__(
         self,
@@ -592,10 +655,16 @@ class CommandExecutor:
         self._line_storage = line_storage
         self._parser = parser
         self._functions: Dict[str, FunctionDefinition] = {}
+        self._global_env: Dict[str, int] = {}
         self._env_stack: List[Dict[str, int]] = []
         self._led_matrix = LedMatrix()
         self._debug = debug
         self._step_limit = step_limit if step_limit > 0 else DEFAULT_STEP_LIMIT
+        self._builtin_functions = {
+            "RND": self._builtin_rnd,
+            "ABS": self._builtin_abs,
+            "SGN": self._builtin_sgn,
+        }
 
     def register_functions(self, functions: Dict[str, FunctionDefinition]) -> None:
         """Replace the known function table (invoked before RUN executes)."""
@@ -611,12 +680,19 @@ class CommandExecutor:
     def _execute(self, statement: Statement, inside_function: bool) -> ExecutionResult:
         if isinstance(statement, PrintStatement):
             self._execute_print(statement)
+        elif isinstance(statement, AssignmentStatement):
+            self._execute_assignment(statement, inside_function)
         elif isinstance(statement, LedStatement):
             self._execute_led(statement)
         elif isinstance(statement, IfStatement):
             return self._execute_if(statement, inside_function)
         elif isinstance(statement, GotoStatement):
             return ExecutionResult(goto_target=statement.target_line)
+        elif isinstance(statement, GosubStatement):
+            if inside_function:
+                print("GOSUB is not supported inside functions.")
+                return ExecutionResult(signal=ExecutionSignal.CONTINUE)
+            return ExecutionResult(gosub_target=statement.target_line)
         elif isinstance(statement, ListStatement):
             self._execute_list()
         elif isinstance(statement, ListFunctionsStatement):
@@ -664,6 +740,33 @@ class CommandExecutor:
             return
 
         print(value)
+
+    def _execute_assignment(self, statement: AssignmentStatement, inside_function: bool) -> None:
+        try:
+            value = self._evaluate_expression(statement.expression)
+        except ZeroDivisionError:
+            print(f"Runtime error: division by zero in assignment to {statement.name}.")
+            return
+        except EvaluationError as exc:
+            print(f"Runtime error in assignment to {statement.name}: {exc}")
+            return
+
+        self._assign(
+            statement.name, value, inside_function=inside_function, force_global=statement.force_global
+        )
+
+    def _assign(self, name: str, value: int, *, inside_function: bool, force_global: bool) -> None:
+        if force_global:
+            self._global_env[name] = value
+            return
+
+        if inside_function:
+            if not self._env_stack:
+                self._env_stack.append({})
+            self._env_stack[-1][name] = value
+            return
+
+        self._global_env[name] = value
 
     def evaluate_expression(self, expression: Expression) -> int:
         """Public hook so other components (ProgramRunner) can reuse evaluation."""
@@ -719,9 +822,15 @@ class CommandExecutor:
         for env in reversed(self._env_stack):
             if name in env:
                 return env[name]
-        raise EvaluationError(f"Unknown identifier '{name}'.")
+        if name in self._global_env:
+            return self._global_env[name]
+        raise EvaluationError(f"Undefined variable {name}")
 
     def _invoke_function(self, expression: FunctionCallExpression) -> int:
+        builtin = self._builtin_functions.get(expression.name)
+        if builtin is not None:
+            return builtin(expression.arguments)
+
         function = self._functions.get(expression.name)
         if function is None:
             raise EvaluationError(f"Unknown function '{expression.name}'.")
@@ -741,6 +850,33 @@ class CommandExecutor:
             return self._run_function_body(function)
         finally:
             self._env_stack.pop()
+
+    def _builtin_rnd(self, arguments: Sequence[Expression]) -> int:
+        if len(arguments) != 1:
+            raise EvaluationError("Builtin RND expects exactly 1 argument.")
+
+        limit = self._evaluate_expression(arguments[0])
+        if limit <= 0:
+            return 0
+        return random.randrange(limit)
+
+    def _builtin_abs(self, arguments: Sequence[Expression]) -> int:
+        if len(arguments) != 1:
+            raise EvaluationError("Builtin ABS expects exactly 1 argument.")
+
+        value = self._evaluate_expression(arguments[0])
+        return abs(value)
+
+    def _builtin_sgn(self, arguments: Sequence[Expression]) -> int:
+        if len(arguments) != 1:
+            raise EvaluationError("Builtin SGN expects exactly 1 argument.")
+
+        value = self._evaluate_expression(arguments[0])
+        if value < 0:
+            return -1
+        if value > 0:
+            return 1
+        return 0
 
     def _run_function_body(self, function: FunctionDefinition) -> int:
         body = function.body
@@ -795,6 +931,12 @@ class CommandExecutor:
             if result.goto_target is not None:
                 print("GOTO is not supported inside functions.")
                 return 0
+            if result.gosub_target is not None:
+                print("GOSUB is not supported inside functions.")
+                return 0
+            if result.gosub_return:
+                print("Line-level RETURN is not supported inside functions.")
+                return 0
             if result.return_value is not None:
                 return result.return_value
 
@@ -839,8 +981,10 @@ class CommandExecutor:
 
     def _execute_return(self, statement: ReturnStatement, inside_function: bool) -> ExecutionResult:
         if not inside_function:
-            self._reject_return_statement()
-            return ExecutionResult(signal=ExecutionSignal.CONTINUE)
+            if statement.value is not None:
+                print("Line-level RETURN does not take a value; use RETURN <expr> inside FUNC.")
+                return ExecutionResult(signal=ExecutionSignal.CONTINUE)
+            return ExecutionResult(signal=ExecutionSignal.CONTINUE, gosub_return=True)
 
         try:
             value = self._evaluate_expression(statement.value) if statement.value else 0
@@ -866,6 +1010,7 @@ class CommandExecutor:
         self._line_storage.clear()
         self._functions.clear()
         self._led_matrix.clear()
+        self._global_env.clear()
         print("Program cleared.")
 
     def _execute_run(self) -> ExecutionResult:
@@ -887,26 +1032,35 @@ class CommandExecutor:
             print(f"{name}({params})")
 
     def _execute_help(self) -> None:
-        print("SolarBASIC commands:")
-        print("  PRINT <expr|string>        — output text or expression results")
-        print("  LED x y ON|OFF             — toggle the simulated 5x5 LED matrix")
-        print("  LIST [FUNCS]/LISTF         — list stored lines or function headers")
-        print("  NEW / RUN / EXIT           — manage the stored program")
-        print("  IF / GOTO / WHILE / FUNC   — structured flow control")
-        print("  HELP / ABOUT               — show this summary or project info")
+        print(f"SolarBASIC {SOLARBASIC_VERSION} — {TAGLINE}")
+        print("Commands:")
+        print("  PRINT <expr|string>          — output text or expression results")
+        print("  X = <expr>                   — assign (inside FUNC stays local by default)")
+        print("  LET X = <expr>               — force a global assignment even inside FUNC")
+        print("  Built-ins: RND, ABS, SGN     — numeric helpers (RND<=0 returns 0)")
+        print("  GOSUB <line> / RETURN        — line subroutines (program mode only)")
+        print("  LED x y ON|OFF               — toggle the simulated 5x5 LED matrix")
+        print("  LIST [FUNCS]/LISTF           — list stored lines or function headers")
+        print("  NEW / RUN / EXIT             — manage the stored program")
+        print("  IF / GOTO / WHILE / FUNC     — structured flow control")
+        print("  HELP / ABOUT                 — show this summary or project info")
 
     def _execute_about(self) -> None:
         features = [
             "PRINT",
+            "ASSIGN",
             "IF",
             "GOTO",
+            "GOSUB",
             "WHILE",
             "FUNC",
             "RETURN",
+            "RND/ABS/SGN",
             "LED",
         ]
-        print(f"SolarBASIC {SOLARBASIC_VERSION}")
+        print(f"SolarBASIC {SOLARBASIC_VERSION} — {TAGLINE}")
         print(f"Author: {SOLARBASIC_AUTHOR}")
+        print("Stage: 14 (v1.0.0 release)")
         print(f"Features: {', '.join(features)}")
 
 
@@ -955,6 +1109,7 @@ class ProgramRunner:
         while_stack: List[Tuple[int, int]] = []
         while_to_wend: Dict[int, int] = {}
         wend_to_while: Dict[int, int] = {}
+        gosub_stack: List[int] = []
         for idx, (line_number, statement) in enumerate(compiled):
             if isinstance(statement, WhileStatement):
                 while_stack.append((idx, line_number))
@@ -1040,6 +1195,26 @@ class ProgramRunner:
                     print(f"GOTO target {target} does not exist. Stopping RUN.")
                     return ExecutionResult(signal=ExecutionSignal.CONTINUE)
                 idx = line_to_index[target]
+                continue
+
+            if result.gosub_target is not None:
+                target = result.gosub_target
+                if target not in line_to_index:
+                    print(f"GOSUB target {target} does not exist. Stopping RUN.")
+                    return ExecutionResult(signal=ExecutionSignal.CONTINUE)
+                gosub_stack.append(idx + 1)
+                if self._debug:
+                    print(f"TRACE: GOSUB to line {target} (return -> index {gosub_stack[-1]})")
+                idx = line_to_index[target]
+                continue
+
+            if result.gosub_return:
+                if not gosub_stack:
+                    print("Runtime error: RETURN without GOSUB.")
+                    return ExecutionResult(signal=ExecutionSignal.CONTINUE)
+                idx = gosub_stack.pop()
+                if self._debug:
+                    print(f"TRACE: RETURN to stored location (index {idx})")
                 continue
 
             if result.return_value is not None:
@@ -1139,7 +1314,7 @@ class ProgramRunner:
 
 
 class SolarBasicRepl:
-    """Provide SolarBASIC REPL behavior for the full Stage 10 milestone."""
+    """Provide SolarBASIC REPL behavior for the v1.0.0 release."""
 
     PROMPT = "READY> "
 
@@ -1182,7 +1357,7 @@ class SolarBasicRepl:
                 break
 
     def _print_banner(self) -> None:
-        stage = "SolarBASIC prototype — Stage 10: Polish & testing"
+        stage = f"SolarBASIC {SOLARBASIC_VERSION} — {TAGLINE}"
         if self._debug:
             stage += " [debug trace]"
         print(stage)
@@ -1230,6 +1405,14 @@ class SolarBasicRepl:
         result = self._executor.execute(statement)
         if result.goto_target is not None:
             print("GOTO is only available when RUN executes stored program lines.")
+            return False
+
+        if result.gosub_target is not None:
+            print("GOSUB is only available when RUN executes stored program lines.")
+            return False
+
+        if result.gosub_return:
+            print("RETURN without GOSUB has no effect in direct mode.")
             return False
 
         if result.signal is ExecutionSignal.EXIT:
