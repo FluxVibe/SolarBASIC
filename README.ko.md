@@ -1,5 +1,5 @@
 ---
-title: "SolarBASIC 리포지토리 개요"
+title: "SolarBASIC 레포지토리 개요"
 version: "1.0.0"
 author: "FluxVibe"
 ---
@@ -35,10 +35,6 @@ python main.py --version
 - 개발자 사양서(한국어): [docs/DEVELOPER_SPEC.ko.md](docs/DEVELOPER_SPEC.ko.md) | [English](docs/DEVELOPER_SPEC.md)
 - 1분 퀵스타트(한국어): [docs/QUICKSTART.ko.md](docs/QUICKSTART.ko.md) | [English](docs/QUICKSTART.md)
 - 변경 내역: [CHANGELOG.md](CHANGELOG.md)
-
-## 브랜드(텍스트 워드마크)
-- 로고 대신 **“SolarBASIC”** 텍스트 워드마크를 사용합니다.
-- 톤은 레트로 BASIC 매뉴얼 감성과 현대 OSS 문서 스타일을 혼합합니다.
 
 ## 예제
 `examples/` 폴더에 바로 실행 가능한 10개 이상의 프로그램이 있습니다. REPL에서 `LISTF`로 함수 목록을 확인하거나 `HELP`로 명령 도움말을 볼 수 있습니다.
