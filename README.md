@@ -73,4 +73,11 @@ is even more important**.
 To everyone who loves retro computing, tiny languages,
 and glowing READY> prompts — this project is dedicated to you.
 
+And to everyone who may contribute to SolarBASIC in the future — thank you in advance.
+This project is not something that can be completed by one person alone.
+All forms of contribution are equally valuable, whether it’s proposing ideas,
+submitting code, reporting bugs, improving documentation, or participating in discussions.
+
+Let’s grow, learn, and build a better small language together.
+
 READY>
