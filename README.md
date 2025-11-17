@@ -1,1 +1,49 @@
-# SolarBASIC-experiments
+---
+title: "SolarBASIC Repository Overview"
+version: "1.0.0"
+author: "FluxVibe"
+---
+
+# SolarBASIC v1.0.0
+
+Language: English (default) | [한국어 문서 보기](README.ko.md)
+
+SolarBASIC is a **tiny, learner-friendly language** that reimagines 8-bit home computer BASIC for modern OSS workflows.
+
+## What is SolarBASIC?
+A compact BASIC-like language with a READY> REPL, lightweight parser, and friendly errors—designed for quick experiments, teaching, and retro-inspired fun.
+
+## Key Features
+- READY> REPL and script execution (`python main.py <file>`)
+- PRINT, assignments (implicit/LET), IF/THEN, WHILE/WEND, GOTO, GOSUB/RETURN
+- FUNC/RETURN functions, built-ins (RND/ABS/SGN), 5×5 LED simulator
+- Step limit, TRACE debug mode, and helpful runtime errors
+- Version flag (`--version`), help/metadata (`HELP`/`ABOUT`), function listing (`LISTF`)
+
+## Quick Start
+```bash
+python main.py                     # REPL
+python main.py examples/demo.bas   # run a script
+python main.py --debug --step-limit 5000 examples/demo.bas
+python main.py --version
+```
+- Direct mode executes single commands immediately.
+- Numbered input is stored as a program and run via `RUN`.
+
+## Documentation Set
+- User Guide: [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | [한국어](docs/USER_GUIDE.ko.md)
+- Developer Specification: [docs/DEVELOPER_SPEC.md](docs/DEVELOPER_SPEC.md) | [한국어](docs/DEVELOPER_SPEC.ko.md)
+- 1-minute Quickstart: [docs/QUICKSTART.md](docs/QUICKSTART.md) | [한국어](docs/QUICKSTART.ko.md)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+
+## Branding (text-only)
+- Use the plain text wordmark **“SolarBASIC”**; no bundled image assets.
+- Tone: retro BASIC manual warmth blended with modern clarity.
+
+## Examples
+`examples/` contains 10+ runnable snippets. In the REPL, use `LIST` to view stored programs and `LISTF` to list function headers.
+
+## Extensibility
+The interpreter uses a small tokenizer/parser, clear AST, and execution model, making it amenable to future ports or VM backends. Hardware deployment is intentionally out of scope for this repository.
+
+Looking for Korean? Read [README.ko.md](README.ko.md) for the full Korean walkthrough and language links.

@@ -1,0 +1,3 @@
+LED 0 0 ON
+LED 1 1 ON
+LED 2 2 OFF
