@@ -36,10 +36,6 @@ python main.py --version
 - 1-minute Quickstart: [docs/QUICKSTART.md](docs/QUICKSTART.md) | [한국어](docs/QUICKSTART.ko.md)
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
 
-## Branding (text-only)
-- Use the plain text wordmark **“SolarBASIC”**; no bundled image assets.
-- Tone: retro BASIC manual warmth blended with modern clarity.
-
 ## Examples
 `examples/` contains 10+ runnable snippets. In the REPL, use `LIST` to view stored programs and `LISTF` to list function headers.
 
