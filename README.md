@@ -43,3 +43,34 @@ python main.py --version
 The interpreter uses a small tokenizer/parser, clear AST, and execution model, making it amenable to future ports or VM backends. Hardware deployment is intentionally out of scope for this repository.
 
 Looking for Korean? Read [README.ko.md](README.ko.md) for the full Korean walkthrough and language links.
+
+## Credits & Acknowledgements
+
+SolarBASIC is an independently designed programming language project
+created with the goal of blending the warm simplicity of retro BASIC
+with the clarity and structure expected in modern scripting languages.
+
+This project was envisioned, directed, documented, tested, and refined
+by **FluxVibe**, with the development process intentionally built on
+an **AI-assisted, specification-driven workflow** to explore the future
+of programming collaboration between human creativity and intelligent tools.
+
+### Development Model
+- Idea, language rules, execution model, feature roadmap, test logic,  
+  and final quality approval were manually designed and reviewed.
+- Implementation and rapid iteration were accelerated using  
+  **OpenAI Codex** under human supervision and structural guidance.
+- Architectural discussions, language philosophy alignment, and  
+  debugging insight were supported by **ChatGPT** sessions.
+
+### Creative Intent
+SolarBASIC is not only a working interpreter, but also a small
+experiment about *how people and AI will co-create software in the future*.
+It is a reminder that **writing code is important, but designing meaning
+is even more important**.
+
+### Special Thanks
+To everyone who loves retro computing, tiny languages,
+and glowing READY> prompts — this project is dedicated to you.
+
+READY>
