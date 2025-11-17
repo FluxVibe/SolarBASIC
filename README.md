@@ -4,42 +4,46 @@ version: "1.0.0"
 author: "FluxVibe"
 ---
 
-
 # SolarBASIC v1.0.0
 
-SolarBASIC은 8비트 홈 컴퓨터 BASIC 감성을 현대 OSS 워크플로에 맞게 재해석한 **작고 배우기 쉬운 미니 언어**입니다.
+Language: English (default) | [한국어 문서 보기](README.ko.md)
 
-## 핵심 특징
-- READY> REPL과 스크립트 실행(`python main.py <file>`)
-- PRINT, 변수 대입(기본/LET), IF/THEN, WHILE/WEND, GOTO, GOSUB/RETURN
-- FUNC/RETURN 함수, 내장 함수(RND/ABS/SGN), 5×5 LED 시뮬레이터
-- 스텝 제한, TRACE 디버그 모드, 친절한 오류 메시지
-- 버전 플래그(`--version`), 도움말(`HELP`/`ABOUT`), 함수 목록(`LISTF`)
+SolarBASIC is a **tiny, learner-friendly language** that reimagines 8-bit home computer BASIC for modern OSS workflows.
 
-## 빠른 시작
+## What is SolarBASIC?
+A compact BASIC-like language with a READY> REPL, lightweight parser, and friendly errors—designed for quick experiments, teaching, and retro-inspired fun.
+
+## Key Features
+- READY> REPL and script execution (`python main.py <file>`)
+- PRINT, assignments (implicit/LET), IF/THEN, WHILE/WEND, GOTO, GOSUB/RETURN
+- FUNC/RETURN functions, built-ins (RND/ABS/SGN), 5×5 LED simulator
+- Step limit, TRACE debug mode, and helpful runtime errors
+- Version flag (`--version`), help/metadata (`HELP`/`ABOUT`), function listing (`LISTF`)
+
+## Quick Start
 ```bash
-python main.py             # REPL
-python main.py examples/demo.bas  # 스크립트 실행
+python main.py                     # REPL
+python main.py examples/demo.bas   # run a script
 python main.py --debug --step-limit 5000 examples/demo.bas
 python main.py --version
 ```
-- direct mode에서는 단일 명령을 즉시 실행합니다.
-- 라인 번호가 있는 입력은 프로그램으로 저장하고 `RUN`으로 실행합니다.
+- Direct mode executes single commands immediately.
+- Numbered input is stored as a program and run via `RUN`.
 
-## 문서 모음
-- 사용자 가이드: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
-- 개발자 사양서: [docs/DEVELOPER_SPEC.md](docs/DEVELOPER_SPEC.md)
-- 1분 빠른 시작: [docs/QUICKSTART.md](docs/QUICKSTART.md)
-- 변경 기록: [CHANGELOG.md](CHANGELOG.md)
+## Documentation Set
+- User Guide: [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | [한국어](docs/USER_GUIDE.ko.md)
+- Developer Specification: [docs/DEVELOPER_SPEC.md](docs/DEVELOPER_SPEC.md) | [한국어](docs/DEVELOPER_SPEC.ko.md)
+- 1-minute Quickstart: [docs/QUICKSTART.md](docs/QUICKSTART.md) | [한국어](docs/QUICKSTART.ko.md)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
 
-## 브랜드 가이드 (요약)
-- 로고 이미지는 별도 배포하지 않으며, 텍스트 기반 “SolarBASIC” 워드마크를 사용합니다.
-- 명칭: “SolarBASIC”을 단일 단어로 표기합니다.
-- 톤: 레트로 BASIC 매뉴얼 감성과 현대적 친절함을 함께 유지합니다.
+## Branding (text-only)
+- Use the plain text wordmark **“SolarBASIC”**; no bundled image assets.
+- Tone: retro BASIC manual warmth blended with modern clarity.
 
-## 예제
-`examples/` 폴더에 최소 10개의 실용 예제가 있습니다. REPL에서는 `LIST`로 저장된 프로그램을 확인하고, `LISTF`로 함수 헤더를 나열할 수 있습니다.
+## Examples
+`examples/` contains 10+ runnable snippets. In the REPL, use `LIST` to view stored programs and `LISTF` to list function headers.
 
-## 확장성
-- 코어 인터프리터는 가벼운 파서와 명확한 AST/실행 모델을 갖추고 있으며, VM이나 다른 플랫폼으로의 포팅도 염두에 두고 설계되었습니다. (하드웨어 배포 내용은 본 저장소에서 다루지 않습니다.)
+## Extensibility
+The interpreter uses a small tokenizer/parser, clear AST, and execution model, making it amenable to future ports or VM backends. Hardware deployment is intentionally out of scope for this repository.
 
+Looking for Korean? Read [README.ko.md](README.ko.md) for the full Korean walkthrough and language links.

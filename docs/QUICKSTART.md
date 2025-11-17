@@ -4,28 +4,28 @@ version: "1.0.0"
 author: "FluxVibe"
 ---
 
-SolarBASIC — Quickstart
-
 # SolarBASIC Quickstart
 
-> 1분 안에 SolarBASIC을 맛보는 초보자용 빠른 안내. 모든 예제는 REPL 또는 `python main.py <file>`로 바로 실행할 수 있습니다.
+Language: English (default) | [한국어 문서](QUICKSTART.ko.md)
 
-## 시작하기
+> Learn SolarBASIC in under a minute. Every snippet runs in the REPL or via `python main.py <file>`.
+
+## Get started
 ```bash
 python main.py            # REPL
-python main.py demo.bas   # 스크립트
+python main.py demo.bas   # script
 ```
 
-## 예제 모음 (5개 이상)
+## Example set (7+)
 
-### 1) Hello + 변수
+### 1) Hello + variables
 ```basic
 PRINT "HELLO"
 LET X = 5
 PRINT X
 ```
 
-### 2) 반복과 조건
+### 2) Loops and conditions
 ```basic
 10 X = 0
 20 WHILE X < 3
@@ -34,7 +34,7 @@ PRINT X
 50 WEND
 ```
 
-### 3) 함수와 SGN
+### 3) Functions and SGN
 ```basic
 10 FUNC SIGN3(N)
 20 RETURN SGN(N)
@@ -42,7 +42,7 @@ PRINT X
 40 PRINT SIGN3(-7)
 ```
 
-### 4) GOSUB와 복귀
+### 4) GOSUB and return
 ```basic
 10 GOSUB 100
 20 PRINT "BACK"
@@ -51,13 +51,13 @@ PRINT X
 110 RETURN
 ```
 
-### 5) LED와 난수
+### 5) LED and random
 ```basic
 LED 0 0 ON
 PRINT RND(5)
 ```
 
-### 6) 합계 계산
+### 6) Sum function
 ```basic
 10 FUNC ADD2(A,B)
 20 RETURN A + B
@@ -65,7 +65,7 @@ PRINT RND(5)
 40 PRINT ADD2(4,6)
 ```
 
-### 7) 루프 종료 감지
+### 7) Loop exit detection
 ```basic
 10 X = 5
 20 IF X = 0 THEN PRINT "DONE"
@@ -74,8 +74,8 @@ PRINT RND(5)
 50 PRINT "END"
 ```
 
-## 다음 단계
-- 더 많은 예제는 `examples/` 폴더를 확인하세요.
-- 세부 사양: `docs/DEVELOPER_SPEC.md`
-- 사용자 설명서: `docs/USER_GUIDE.md`
+## Next steps
+- More examples: `examples/`
+- Developer details: `docs/DEVELOPER_SPEC.md`
+- Full guide: `docs/USER_GUIDE.md`
 
