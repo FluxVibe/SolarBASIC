@@ -1,9 +1,3 @@
----
-title: "SolarBASIC 레포지토리 개요"
-version: "1.0.0"
-author: "FluxVibe"
----
-
 # SolarBASIC v1.0.0
 
 언어: 한국어 | [English](README.md)
